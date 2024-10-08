@@ -6,6 +6,7 @@ Objetivo 1: Enviar mensagem automaticas em grupo do whatsapp com a solicitação
 3 - Enviar a mensagem personalizada com esses dados nos grupos de whatsapp
 
 Objetivo 2: Enviar mensagem automaticas para cada profissional no whatsapp que atende o bairro daquela solicitação
+1 - Pegar o nome do paciente na aba Pacientes
 1 - Pegar o endereço [rua e bairro] dos pacientes (na aba Pacientes) na aba Solicitações
 2 - Pegar o bairro que o proffional atende pelo contato salvo no whatsapp
 3 - Fazer o match do bairro do paciente com o bairro do profissional
@@ -24,79 +25,136 @@ client.on("qr", (qr) => {
 });
 
 client.on("ready", async () => {
-  const contatos = await client.getContacts();
-  //pega os dados de contatos pelos nomes salvos no celular
-  await buscaContatosSalvosPeloCell();
+  const pacientes = await buscaOsPacientesQueNecessitamDeAtendimento();
 
-  //pega os dados do bairro e busca profissionais no whatsapp
-  await buscaOsProfissionaisSalvosPeloBairro();
+  const enderecoAtendimento =
+    await buscaOenderecoDosPacientesQueNecessitamDeAtendimento();
 
-  //pega o nome do profissional e manda uma mensagem com a rua e bairro e o PAD
-  await enviaMensagemProProfissional();
+  const bairroAtendimento =
+    await buscaOsBairrosDosPacientesQueNecessitamDeAtendimento();
+
+  const contatos = await buscaContatosSalvosPeloCell();
+
+  const frequenciaAtendimento = await buscaAfrequencaiaDeAtendimento();
+
+  const objPaciente = await montaObjetosPacientes(
+    pacientes,
+    enderecoAtendimento,
+    bairroAtendimento,
+    frequenciaAtendimento
+  );
+  console.log("Objetos Pacientes:", objPaciente);
 });
 
-buscaContatosSalvosPeloCell = async () => {
+const buscaOsPacientesQueNecessitamDeAtendimento = async () => {
+  console.log("Iniciando busca de pacientes que necessitam de atendimento...");
+  const arrPacientesEncontradosParaAtendimento = [];
+  // Itere a partir da quinta linha (índice 2)
+  for (let i = 5; aba2.length && i < 100; i++) {
+    const row = aba2[i];
+    const nomePaciente = row[2];
+    if (nomePaciente) {
+      arrPacientesEncontradosParaAtendimento.push(nomePaciente);
+    }
+  }
+  console.log("Busca de pacientes concluída.");
+  return arrPacientesEncontradosParaAtendimento;
+};
+
+const buscaOenderecoDosPacientesQueNecessitamDeAtendimento = async () => {
+  console.log("Iniciando busca de endereços dos pacientes...");
+
+  const arrDeEnderecosEncontrados = [];
+  for (let i = 4; i < aba1.length && i < 100; i++) {
+    const row = aba1[i];
+    const enderecoPaciente = row[2];
+    if (enderecoPaciente && enderecoPaciente.trim() !== "") {
+      arrDeEnderecosEncontrados.push(enderecoPaciente);
+    }
+  }
+  console.log("Busca de endereços concluída.");
+
+  return arrDeEnderecosEncontrados;
+};
+
+const buscaOsBairrosDosPacientesQueNecessitamDeAtendimento = async () => {
+  const arrBairrosEncontrados = [];
+  for (let i = 4; i < aba1.length && i < 100; i++) {
+    const row = aba1[i];
+    const bairroPaciente = row[3];
+    if (bairroPaciente && bairroPaciente.trim() !== "") {
+      arrBairrosEncontrados.push(bairroPaciente);
+    }
+  }
+
+  return arrBairrosEncontrados;
+};
+
+const buscaAfrequencaiaDeAtendimento = async () => {
+  const arrFrequenciaEncontrada = [];
+  for (let i = 4; i < aba1.length && i < 100; i++) {
+    const row = aba1[i];
+    const frequenciaPaciente = row[7];
+    if (frequenciaPaciente && frequenciaPaciente.trim() !== "") {
+      arrFrequenciaEncontrada.push(frequenciaPaciente);
+    }
+  }
+
+  return arrFrequenciaEncontrada;
+};
+
+const buscaContatosSalvosPeloCell = async () => {
   const contatos = await client.getContacts();
 
   const shortNameList = contatos
     .map((ctts) => ctts.shortName)
     .filter((name) => name !== undefined);
 
-  return shortNameList;
+  const uniqueShortNameList = [...new Set(shortNameList)];
+
+  return uniqueShortNameList;
 };
 
-const buscaOsProfissionaisSalvosPeloBairro = async () => {
-  const contatosSalvosPeloCell = await buscaContatosSalvosPeloCell();
-  const arrDeProfissionaisParaAtendimento = [];
+const montaObjetosPacientes = async (
+  pacientes,
+  enderecos,
+  bairros,
+  frequencias
+) => {
+  const pacientesObj = pacientes.map((paciente, index) => {
+    return {
+      nome: paciente,
+      endereco: enderecos[index],
+      bairro: bairros[index],
+      frequencia: frequencias[index],
+    };
+  });
 
-  const extrairBairro = () => {
-    const nomeProfissional = row["Nome"];
-    console.log("Nome do profissional:", nomeProfissional);
-
-    return nomeProfissional;
-  };
-
-  enviaMensagemProProfissional = async () => {};
-
-  const buscaDadosSolicitações = () => {};
-  // Iterar sobre os dados da primeira aba da tabela para obter os nomes dos pacientes
-  for (const row of aba1) {
-    const pacienteNome = row["NOME DO PACIENTE"];
-    console.log("Nome:", pacienteNome);
-
-    //verificar se existe endereço
-    if (enderecoPaciente) {
-      //extrai o bairro do endereço
-
-      // console.log(`Endereço: ${enderecoPaciente}, Bairro: ${pacienteBairro}`);
-
-      // Verificar se o nome salvo pelo celular contém algum profissional buscando pelo bairro na tabela
-      matchPacienteProfisional();
-    } else {
-      console.log("Paciente sem endereço na tabela");
-    }
-
-    // function matchPacienteProfisional() {
-    //   const pacienteBairro = extrairBairro(enderecoPaciente);
-
-    //   const profissionaisEncontrados = contatosSalvosPeloCell.filter((ctt) => {
-    //     const regex = new RegExp(`\\b${pacienteBairro}\\b`, "i");
-    //     return regex.test(ctt);
-    //   });
-    //   // console.log(profissionaisEncontrados);
-
-    //   if (profissionaisEncontrados.length > 0) {
-    //     arrDeProfissionaisParaAtendimento.push(...profissionaisEncontrados);
-    //   }
-    // }
-  }
-
-  // console.log(
-  //   "Profissionais encontrados para atendimento:",
-  //   arrDeProfissionaisParaAtendimento
-  // );
-
-  return arrDeProfissionaisParaAtendimento;
+  return pacientesObj;
 };
 
+const buscaProfissionaisQueAtendemObairro = async (bairro) => {
+  const contatos = await buscaContatosSalvosPeloCell();
+
+  const profissionais = contatos.filter((contato) => {
+    return contato.includes(bairro);
+  });
+
+  return profissionais;
+};
+
+//Se o bairro que o paciente mora for igual ao bairro que o profissional atende, envia a mensagem
+// const matchPacienteProfisional = async (pacientes) => {
+//   for (const paciente of pacientes) {
+//     const profissionais = await buscaProfissionaisQueAtendemObairro(
+//       paciente.bairro
+//     );
+//     if (profissionais) {
+//       console.log(
+//         `Profissionais que atendem o bairro do paciente ${paciente.nome}`,
+//         profissionais
+//       );
+//     }
+//   }
+// };
 client.initialize();
