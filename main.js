@@ -68,7 +68,7 @@ const buscaOsNomesPaciente = async () => {
   for (let i = 5; aba2.length && i < 100; i++) {
     const row = aba2[i];
     const nomePaciente = row[2];
-    if (nomePaciente) {
+    if (nomePaciente && nomePaciente.trim() !== "") {
       arrPacientesEncontradosParaAtendimento.push(nomePaciente);
     }
   }
@@ -152,23 +152,33 @@ const montaObjetoSolicitacao = async (
   frequencias
 ) => {
   console.log("Iniciando montagem do objeto de solicitação...");
-  const solicitacaoObj = pacientes.map((paciente, index) => {
-    // const profissionais = await buscaProfissionaisQueAtendemObairro(
-    //   bairros[index],
-    //   EspecialidadesArray
-    // );
-    // console.log("Profissionais encontrados: ", profissionais);
-
-    return {
-      idSolicitacao: ids[index],
-      nome: paciente,
-      endereco: enderecos[index],
-      bairro: bairros[index],
-      especialidadesNecessarias: especialidades[index],
-      frequenciasNecessarias: frequencias[index],
-      // profissionaisEncontrados: profissionais,
-    };
-  });
+  const solicitacaoObj = pacientes
+    .map((paciente, index) => {
+      // const profissionais = await buscaProfissionaisQueAtendemObairro(
+      //   bairros[index],
+      //   EspecialidadesArray
+      // );
+      // console.log("Profissionais encontrados: ", profissionais);
+      if (
+        ids[index] &&
+        paciente &&
+        enderecos[index] &&
+        bairros[index] &&
+        especialidades[index] &&
+        frequencias[index]
+      ) {
+        return {
+          idSolicitacao: ids[index],
+          nome: paciente,
+          endereco: enderecos[index],
+          bairro: bairros[index],
+          especialidadesNecessarias: especialidades[index],
+          frequenciasNecessarias: frequencias[index],
+          // profissionaisEncontrados: profissionais,
+        };
+      }
+    })
+    .filter((solicitacao) => solicitacao !== undefined);
   console.log("Montagem do objeto de solicitação concluída.");
   return solicitacaoObj;
 };
