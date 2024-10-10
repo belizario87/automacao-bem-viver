@@ -39,12 +39,17 @@ client.on("ready", async () => {
       especialidade,
       frequenciaAtendimento
     );
-    // console.log("Solicitações:", objSolicitacao);
+    console.log("Solicitações:", objSolicitacao);
 
-    const profissionaisFiltrados = await buscaProfissionaisQueAtendemObairro(
-      bairroAtendimento
-    );
-
+    for (const solicitacao of objSolicitacao) {
+      const profissionaisFiltrados = await buscaProfissionaisQueAtendemObairro(
+        solicitacao
+      );
+      console.log(
+        `Profissionais que atendem a solicitação ${solicitacao.idSolicitacao}:`,
+        profissionaisFiltrados
+      );
+    }
     //logica para processar solicitações
   } catch (error) {
     console.error("Erro durante a inicialização:", error);
@@ -188,7 +193,7 @@ const montaObjetoSolicitacao = async (
   return solicitacaoObj;
 };
 
-const buscaProfissionaisQueAtendemObairro = async (bairros) => {
+const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
   console.log(
     "Iniciando busca de profissionais no Whatsapp que atendem o bairro..."
   );
@@ -198,16 +203,58 @@ const buscaProfissionaisQueAtendemObairro = async (bairros) => {
   const contatosLower = contatos.map((contato) => contato.toLowerCase());
   console.log("Contatos encontrados: ", contatosLower);
 
-  const bairroLower = bairros.map((bairro) => bairro.toLowerCase());
-  console.log("Bairro encontrado: ", bairroLower);
+  console.log("Solicitação recebida:", solicitacao);
+
+  const bairrosLower = Array.isArray(solicitacao.bairro)
+    ? solicitacao.bairro.map((bairro) => bairro.toLowerCase())
+    : [solicitacao.bairro.toLowerCase()];
+  console.log("Bairros encontrados: ", bairrosLower);
+
+  // Mapeamento de abreviações ou variações comuns das especialidades
+  const especialidadesMap = {
+    fisioterapia: ["fisio", "fisioterapia"],
+    psicologia: ["psico", "psicologia"],
+    fonoaudiologia: ["fono", "fonoaudiologia"],
+    "terapia ocupacional": [
+      "terapia ocupacional",
+      "terapeuta ocupacional",
+      "to",
+    ],
+  };
+
+  // Garantir que especialidadesNecessarias seja um array e separar especialidades múltiplas
+  const especialidades = Array.isArray(solicitacao.especialidadesNecessarias)
+    ? solicitacao.especialidadesNecessarias
+    : solicitacao.especialidadesNecessarias.split(",").map((e) => e.trim());
+
+  const especialidadesLower = especialidades.flatMap((especialidade) => {
+    const lowerEspecialidade = especialidade.toLowerCase();
+    return especialidadesMap[lowerEspecialidade] || [lowerEspecialidade];
+  });
+  console.log("Especialidades encontradas: ", especialidadesLower);
 
   const profissionaisFiltrados = contatos.filter((profissional) => {
     const profissionalLower = profissional.toLowerCase();
-    return bairroLower.some((bairro) => profissionalLower.includes(bairro));
+    const bairroMatch = bairrosLower.some((bairro) =>
+      profissionalLower.includes(bairro)
+    );
+
+    const especialidadeMatch = especialidadesLower.some((especialidade) =>
+      profissionalLower.includes(especialidade)
+    );
+
+    console.log("Bairro:", bairrosLower);
+
+    console.log("Verificando profissional:", profissionalLower);
+    console.log(
+      `Bairro match: ${bairroMatch}, Especialidade match: ${especialidadeMatch}`
+    );
+
+    return bairroMatch && especialidadeMatch;
   });
+
   console.log("Profissionais encontrados: ", profissionaisFiltrados);
 
-  console.log("Busca de profissionais concluída.");
   return profissionaisFiltrados;
 };
 
