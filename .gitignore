@@ -1,0 +1,10 @@
+node_modules/
+*.metadata
+*.log
+*.tmp
+*.bak
+*.wwwebjs_auth
+*.dat
+
+.wwebjs_auth/
+.wwebjs_cache
