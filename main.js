@@ -39,18 +39,14 @@ client.on("ready", async () => {
       especialidade,
       frequenciaAtendimento
     );
-    console.log("Solicitações:", objSolicitacao);
 
     for (const solicitacao of objSolicitacao) {
       const profissionaisFiltrados = await buscaProfissionaisQueAtendemObairro(
         solicitacao
       );
-      console.log(
-        `Profissionais que atendem a solicitação ${solicitacao.idSolicitacao}:`,
-        profissionaisFiltrados
-      );
+      solicitacao.profissionaisEncontrados = profissionaisFiltrados;
     }
-    //logica para processar solicitações
+    console.log("Solicitações com profissionais:", objSolicitacao);
   } catch (error) {
     console.error("Erro durante a inicialização:", error);
   }
@@ -194,21 +190,13 @@ const montaObjetoSolicitacao = async (
 };
 
 const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
-  console.log(
-    "Iniciando busca de profissionais no Whatsapp que atendem o bairro..."
-  );
-
   const contatos = await buscaContatosWhatsapp();
 
   const contatosLower = contatos.map((contato) => contato.toLowerCase());
-  console.log("Contatos encontrados: ", contatosLower);
-
-  console.log("Solicitação recebida:", solicitacao);
 
   const bairrosLower = Array.isArray(solicitacao.bairro)
     ? solicitacao.bairro.map((bairro) => bairro.toLowerCase())
     : [solicitacao.bairro.toLowerCase()];
-  console.log("Bairros encontrados: ", bairrosLower);
 
   // Mapeamento de abreviações ou variações comuns das especialidades
   const especialidadesMap = {
@@ -231,7 +219,6 @@ const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
     const lowerEspecialidade = especialidade.toLowerCase();
     return especialidadesMap[lowerEspecialidade] || [lowerEspecialidade];
   });
-  console.log("Especialidades encontradas: ", especialidadesLower);
 
   const profissionaisFiltrados = contatos.filter((profissional) => {
     const profissionalLower = profissional.toLowerCase();
@@ -243,17 +230,8 @@ const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
       profissionalLower.includes(especialidade)
     );
 
-    console.log("Bairro:", bairrosLower);
-
-    console.log("Verificando profissional:", profissionalLower);
-    console.log(
-      `Bairro match: ${bairroMatch}, Especialidade match: ${especialidadeMatch}`
-    );
-
     return bairroMatch && especialidadeMatch;
   });
-
-  console.log("Profissionais encontrados: ", profissionaisFiltrados);
 
   return profissionaisFiltrados;
 };
