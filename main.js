@@ -22,6 +22,7 @@ client.on("ready", async () => {
 
   try {
     const ctts = await buscaContatosWhatsapp();
+    console.log("Contatos encontrados:", ctts);
 
     const ids = await buscaIDsolicitacao();
     const pacientes = await buscaOsNomesPaciente();
@@ -202,11 +203,12 @@ const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
   const especialidadesMap = {
     fisioterapia: ["fisio", "fisioterapia"],
     psicologia: ["psico", "psicologia"],
-    fonoaudiologia: ["fono", "fonoaudiologia"],
+    fonoaudologia: ["fono", "fonoaudologia"],
     "terapia ocupacional": [
       "terapia ocupacional",
       "terapeuta ocupacional",
       "to",
+      "terapeuta",
     ],
   };
 
@@ -215,10 +217,16 @@ const buscaProfissionaisQueAtendemObairro = async (solicitacao) => {
     ? solicitacao.especialidadesNecessarias
     : solicitacao.especialidadesNecessarias.split(",").map((e) => e.trim());
 
-  const especialidadesLower = especialidades.flatMap((especialidade) => {
-    const lowerEspecialidade = especialidade.toLowerCase();
-    return especialidadesMap[lowerEspecialidade] || [lowerEspecialidade];
-  });
+  const especialidadesLower = especialidades
+    .map((especialidade) => {
+      const especialidadeLower = especialidade.toLowerCase();
+      const mappedEspecialidades = especialidadesMap[especialidadeLower] || [
+        especialidadeLower,
+      ];
+
+      return mappedEspecialidades;
+    })
+    .flat();
 
   const profissionaisFiltrados = contatos.filter((profissional) => {
     const profissionalLower = profissional.toLowerCase();
